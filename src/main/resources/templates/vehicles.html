@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: head('Vehicles')}"></head>
+<body class="d-flex flex-column min-vh-100 app-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-4 flex-grow-1">
+    <div th:replace="~{fragments/messages :: messages}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-list-ul me-2"></i>Vehicle List</h1>
+            <p class="text-muted mb-0">Search and browse registered vehicles.</p>
+        </div>
+        <a th:href="@{/vehicles/add}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-plus-circle me-1"></i>Add Vehicle
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form id="vehicleSearchForm" th:action="@{/vehicles/search}" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="vehicleNumber">Vehicle Number</label>
+                    <input class="form-control" id="vehicleNumber" name="vehicleNumber"
+                           th:value="${vehiclePage.vehicleNumber}" autocomplete="off"/>
+                </div>
+                <div class="col-md-4" sec:authorize="hasRole('ADMIN')">
+                    <label class="form-label" for="vehicleType">Vehicle Type</label>
+                    <input class="form-control" id="vehicleType" name="vehicleType"
+                           th:value="${vehiclePage.vehicleType}" autocomplete="off"/>
+                </div>
+
+                <div class="col-md-4" sec:authorize="hasRole('ADMIN')">
+                    <label class="form-label" for="blockNo">Block No</label>
+                    <select class="form-select" id="blockNo" name="blockNo">
+                        <option value="">Select Block</option>
+                        <option th:each="block : ${blockOptions}"
+                                th:value="${block}"
+                                th:text="${block}"
+                                th:selected="${block == vehiclePage.blockNo}">A</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="houseNo">House No</label>
+                    <input class="form-control" id="houseNo" name="houseNo"
+                           th:value="${vehiclePage.houseNo}" autocomplete="off"/>
+                </div>
+
+                <!-- Admin-only search fields -->
+                <div class="col-md-4" sec:authorize="hasRole('ADMIN')">
+                    <label class="form-label" for="name">Name</label>
+                    <input class="form-control" id="name" name="name"
+                           th:value="${vehiclePage.name}" autocomplete="off"/>
+                </div>
+                <div class="col-md-4" sec:authorize="hasRole('ADMIN')">
+                    <label class="form-label" for="mobileNumber">Mobile Number</label>
+                    <input class="form-control" id="mobileNumber" name="mobileNumber"
+                           th:value="${vehiclePage.mobileNumber}" autocomplete="off"/>
+                </div>
+                <div class="col-md-4" sec:authorize="hasRole('ADMIN')">
+                    <label class="form-label" for="size">Page size</label>
+                    <select name="size" id="size" class="form-select">
+                        <option value="10" th:selected="${vehiclePage.size == 10}">10</option>
+                        <option value="25" th:selected="${vehiclePage.size == 25}">25</option>
+                        <option value="50" th:selected="${vehiclePage.size == 50}">50</option>
+                        <option value="100" th:selected="${vehiclePage.size == 100}">100</option>
+                    </select>
+                </div>
+
+                <!-- Public users keep default page size -->
+                <input type="hidden" name="size" th:value="${vehiclePage.size}" sec:authorize="!hasRole('ADMIN')"/>
+                <input type="hidden" name="sort" th:value="${vehiclePage.sort}"/>
+                <input type="hidden" name="direction" th:value="${vehiclePage.direction}"/>
+                <input type="hidden" name="page" value="0"/>
+                <div class="col-12 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+                    <a th:href="@{/vehicles}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="alert alert-info mb-0" th:if="${!vehiclePage.searched}">
+        <span th:text="${vehiclePage.searchMessage} ?: 'Enter search criteria to view vehicle details.'">
+            Enter search criteria to view vehicle details.
+        </span>
+    </div>
+
+    <div th:if="${vehiclePage.searched}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="fw-semibold"
+                      th:with="listingAll=${#strings.isEmpty(vehiclePage.vehicleNumber) and #strings.isEmpty(vehiclePage.vehicleType) and #strings.isEmpty(vehiclePage.houseNo) and #strings.isEmpty(vehiclePage.blockNo) and #strings.isEmpty(vehiclePage.name) and #strings.isEmpty(vehiclePage.mobileNumber)}"
+                      th:text="${listingAll} ? 'All Vehicles:' : 'Search Results:'">Search Results:</span>
+                <span class="badge text-bg-secondary" th:text="${vehiclePage.totalElements}">0</span>
+            </div>
+        </div>
+
+        <div class="table-responsive card shadow-sm border-0">
+            <table class="table table-hover mb-0 align-middle text-center search-results-table">
+                <thead class="table-light">
+                <tr>
+                    <th>
+                        <a th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=0,size=${vehiclePage.size},sort='type',direction=${vehiclePage.sort == 'type' and vehiclePage.direction == 'asc' ? 'desc' : 'asc'})}">
+                            Vehicle Type <i class="bi bi-arrow-down-up" sec:authorize="hasRole('ADMIN')"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=0,size=${vehiclePage.size},sort='number',direction=${vehiclePage.sort == 'number' and vehiclePage.direction == 'asc' ? 'desc' : 'asc'})}">
+                            Vehicle Number <i class="bi bi-arrow-down-up" sec:authorize="hasRole('ADMIN')"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=0,size=${vehiclePage.size},sort='block',direction=${vehiclePage.sort == 'block' and vehiclePage.direction == 'asc' ? 'desc' : 'asc'})}">
+                            Block No <i class="bi bi-arrow-down-up" sec:authorize="hasRole('ADMIN')"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=0,size=${vehiclePage.size},sort='house',direction=${vehiclePage.sort == 'house' and vehiclePage.direction == 'asc' ? 'desc' : 'asc'})}">
+                            House No <i class="bi bi-arrow-down-up" sec:authorize="hasRole('ADMIN')"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=0,size=${vehiclePage.size},sort='name',direction=${vehiclePage.sort == 'name' and vehiclePage.direction == 'asc' ? 'desc' : 'asc'})}">
+                            Name <i class="bi bi-arrow-down-up" sec:authorize="hasRole('ADMIN')"></i>
+                        </a>
+                    </th>
+                    <th>Mobile Number</th>
+                    <th sec:authorize="hasRole('ADMIN')" class="text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(vehiclePage.content)}">
+                    <td th:colspan="${#authorization.expression('hasRole(''ADMIN'')') ? 7 : 6}" class="text-center text-muted py-4"
+                        th:text="${vehiclePage.searchMessage} ?: 'No vehicle records found.'">
+                        No vehicle records found.
+                    </td>
+                </tr>
+                <tr th:each="v : ${vehiclePage.content}">
+                    <td th:text="${v.vehicleType}">car</td>
+                    <td><span class="badge bg-secondary" th:text="${v.vehicleNumber}">GJ01</span></td>
+                    <td th:text="${v.blockNo}">F</td>
+                    <td th:text="${v.houseNo}">101</td>
+                    <td th:text="${v.name}">User</td>
+                    <td class="text-nowrap">
+                        <span th:text="${v.mobileNumber}">9876543210</span>
+                        <a th:if="${!#strings.isEmpty(v.mobileNumber)}"
+                           th:href="'tel:' + ${#strings.replace(v.mobileNumber, ' ', '')}"
+                           class="call-link ms-1"
+                           th:attr="aria-label=${'Call ' + v.mobileNumber}">
+                            <i class="bi bi-telephone-fill"></i>
+                        </a>
+                    </td>
+                    <td sec:authorize="hasRole('ADMIN')" class="text-center text-nowrap">
+                        <a th:href="@{/vehicles/edit/{id}(id=${v.id})}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <form th:action="@{/vehicles/delete/{id}(id=${v.id})}" method="post" class="d-inline delete-form"
+                              data-confirm="Move this vehicle to Deleted? You can restore it later from the Deleted menu.">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="mt-4" th:if="${vehiclePage.totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${vehiclePage.page == 0} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=${vehiclePage.page - 1},size=${vehiclePage.size},sort=${vehiclePage.sort},direction=${vehiclePage.direction})}">Previous</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link" th:text="'Page ' + (${vehiclePage.page} + 1) + ' of ' + ${vehiclePage.totalPages}"></span>
+                </li>
+                <li class="page-item" th:classappend="${vehiclePage.page + 1 >= vehiclePage.totalPages} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/vehicles/search(vehicleType=${vehiclePage.vehicleType},vehicleNumber=${vehiclePage.vehicleNumber},blockNo=${vehiclePage.blockNo},houseNo=${vehiclePage.houseNo},name=${vehiclePage.name},mobileNumber=${vehiclePage.mobileNumber},page=${vehiclePage.page + 1},size=${vehiclePage.size},sort=${vehiclePage.sort},direction=${vehiclePage.direction})}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Import Excel')}"></head>
+<body class="d-flex flex-column min-vh-100 app-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-4 flex-grow-1">
+    <div th:replace="~{fragments/messages :: messages}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Import Excel</h1>
+                    <p class="text-muted">
+                        Upload a <strong>.xlsx</strong> file with these columns:
+                        <strong>Vehicle Type</strong>, <strong>Vehicle Number</strong>,
+                        <strong>Block No</strong>, <strong>House No</strong>, <strong>Name</strong>, <strong>Mobile Number</strong>.
+                        An optional ID column is ignored. Data is saved to the database.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <a th:href="@{/vehicles/import/demo}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Demo Excel
+                        </a>
+                        <a th:href="@{/vehicles/export}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>Export All Vehicles
+                        </a>
+                    </div>
+
+                    <form th:action="@{/vehicles/import}" method="post" enctype="multipart/form-data" id="importForm">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Excel File (.xlsx)</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".xlsx" required/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Import Mode</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mode" id="modeAppend" value="append" checked/>
+                                <label class="form-check-label" for="modeAppend">Append — add new records to existing data</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mode" id="modeReplace" value="replace"/>
+                                <label class="form-check-label" for="modeReplace">Replace — overwrite all existing data (requires confirmation)</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check" id="confirmReplaceGroup" style="display:none;">
+                            <input class="form-check-input" type="checkbox" name="confirmReplace" id="confirmReplace" value="true"/>
+                            <label class="form-check-label text-danger" for="confirmReplace">
+                                I understand this will replace all existing vehicle data in the database.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload me-1"></i>Import
+                        </button>
+                        <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary ms-2">Back</a>
+                    </form>
+
+                    <div th:if="${importResult}" class="mt-4">
+                        <h2 class="h5">Import Summary</h2>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Mode</span>
+                                <span class="badge bg-info" th:text="${importResult.mode}">append</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Total Rows</span>
+                                <span th:text="${importResult.totalRows}">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Imported</span>
+                                <span class="text-success fw-semibold" th:text="${importResult.imported}">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Skipped duplicates</span>
+                                <span class="text-warning" th:text="${importResult.skippedDuplicates}">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Invalid rows</span>
+                                <span class="text-danger" th:text="${importResult.invalidRows}">0</span>
+                            </li>
+                        </ul>
+                        <div th:if="${!#lists.isEmpty(importResult.errors)}" class="mt-3">
+                            <h3 class="h6 text-danger">Errors</h3>
+                            <ul class="small text-danger">
+                                <li th:each="err : ${importResult.errors}" th:text="${err}"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

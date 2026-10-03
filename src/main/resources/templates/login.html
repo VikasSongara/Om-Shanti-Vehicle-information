@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Admin Login')}"></head>
+<body class="d-flex flex-column min-vh-100 app-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-5 flex-grow-1 d-flex align-items-center">
+    <div class="row justify-content-center w-100">
+        <div class="col-11 col-sm-9 col-md-6 col-lg-4">
+            <div class="login-card">
+                <h1 class="login-title">Admin Login</h1>
+                <p class="login-subtitle">Sign in to manage vehicle records.</p>
+
+                <div th:if="${param.error}" class="alert alert-danger py-2">
+                    Invalid username or password.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success py-2">
+                    You have been logged out successfully.
+                </div>
+
+                <form th:action="@{/login}" method="post" class="mt-3">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="mb-3">
+                        <label for="username" class="form-label login-label">Username</label>
+                        <input type="text" class="form-control login-input" id="username" name="username"
+                               required autofocus autocomplete="username"/>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label login-label">Password</label>
+                        <input type="password" class="form-control login-input" id="password" name="password"
+                               required autocomplete="current-password"/>
+                    </div>
+                    <button type="submit" class="btn btn-login w-100">Login</button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <a th:href="@{/}" class="login-back-link">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
