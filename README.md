@@ -103,22 +103,32 @@ Never commit production passwords.
 
 | Key | Value |
 | --- | --- |
-| `ADMIN_USERNAME` | your admin username (**required**) |
-| `ADMIN_PASSWORD` | your strong password (**required**) |
-| `DB_PASSWORD` | your Supabase database password |
 | `SPRING_PROFILES_ACTIVE` | `prod` |
 | `COOKIE_SECURE` | `true` |
-| `DB_HOST` | `db.tqdduurvsqqnfqqdgfbx.supabase.co` |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `postgres` |
-| `DB_USER` | `postgres` |
+| `ADMIN_USERNAME` | your admin username (**required**) |
+| `ADMIN_PASSWORD` | your strong password (**required**) |
+| `SPRING_DATASOURCE_URL` | Supabase **Session pooler** JDBC URL (**required**, see below) |
+| `DB_USER` | `postgres.<project-ref>` (Session pooler user) |
+| `DB_PASSWORD` | your Supabase database password |
+
+**Do not use** `db.<project>.supabase.co` on Render — it is often IPv6-only and the deploy hangs with “No open ports detected”.
+
+### Supabase Session pooler URL
+
+In Supabase: **Project Settings → Database → Connection string → Session pooler**.
+
+Example:
+
+```text
+SPRING_DATASOURCE_URL=jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
+DB_USER=postgres.tqdduurvsqqnfqqdgfbx
+DB_PASSWORD=your-supabase-db-password
+```
 
 4. Health Check Path: `/`
-5. Deploy → open `https://<your-app>.onrender.com/login`
+5. Deploy → open `https://<your-app>.onrender.com/`
 
-Get the DB password from Supabase: **Project Settings → Database → Database password**.
-
-In Supabase, allow connections from the internet (default for hosted Postgres). If you enable network restrictions, allow Render egress or use the connection pooler.
+If deploy still times out, check Render logs for Hikari/DB errors (wrong password, missing env vars, or still using the direct `db.*` host).
 
 ---
 
