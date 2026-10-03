@@ -34,6 +34,9 @@
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link" th:href="@{/vehicles/deleted}">Deleted</a>
                 </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin/scheduler}">Scheduler</a>
+                </li>
                 <li class="nav-item nav-item-excel" sec:authorize="hasRole('ADMIN')">
                     <button type="button" class="nav-link nav-excel-toggle" id="excelNav"
                             aria-expanded="false" aria-controls="excelSubmenu">

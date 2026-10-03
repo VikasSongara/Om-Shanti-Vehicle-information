@@ -51,6 +51,7 @@
                 <a th:href="@{/vehicles}" class="btn btn-primary">View Vehicles</a>
                 <a th:href="@{/vehicles/add}" class="btn btn-primary">Add Vehicle</a>
                 <a th:href="@{/vehicles/deleted}" class="btn btn-outline-danger">Deleted</a>
+                <a th:href="@{/admin/scheduler}" class="btn btn-outline-primary">Scheduler</a>
                 <form th:action="@{/logout}" method="post" class="d-inline">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <button type="submit" class="btn btn-outline-secondary">Logout</button>
