@@ -1,10 +1,8 @@
 package com.example.vehicleinformation.controller;
 
+import com.example.vehicleinformation.config.SecurityAuthHelper;
 import com.example.vehicleinformation.dto.VehiclePageDto;
 import com.example.vehicleinformation.service.VehicleService;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +29,7 @@ public class HomeController {
                         @RequestParam(defaultValue = "house") String sort,
                         @RequestParam(defaultValue = "asc") String direction,
                         Model model) {
-        boolean admin = isAdmin();
+        boolean admin = SecurityAuthHelper.isAdmin();
         // Public users cannot search/filter by admin-only fields.
         if (!admin) {
             vehicleType = null;
@@ -45,18 +43,5 @@ public class HomeController {
         );
         model.addAttribute("vehiclePage", pageDto);
         return "vehicles";
-    }
-
-    private boolean isAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return false;
-        }
-        for (GrantedAuthority authority : authentication.getAuthorities()) {
-            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

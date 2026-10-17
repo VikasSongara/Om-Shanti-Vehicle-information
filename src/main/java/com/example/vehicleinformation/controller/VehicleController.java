@@ -1,19 +1,19 @@
 package com.example.vehicleinformation.controller;
 
+import com.example.vehicleinformation.config.SecurityAuthHelper;
 import com.example.vehicleinformation.dto.ImportResultDto;
 import com.example.vehicleinformation.dto.VehicleFormDto;
 import com.example.vehicleinformation.dto.VehiclePageDto;
 import com.example.vehicleinformation.exception.DuplicateVehicleException;
 import com.example.vehicleinformation.exception.VehicleNotFoundException;
 import com.example.vehicleinformation.model.Vehicle;
+import com.example.vehicleinformation.service.UserRightsService;
 import com.example.vehicleinformation.service.VehicleService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -34,9 +35,11 @@ import java.time.format.DateTimeFormatter;
 public class VehicleController {
 
     private final VehicleService vehicleService;
+    private final UserRightsService userRightsService;
 
-    public VehicleController(VehicleService vehicleService) {
+    public VehicleController(VehicleService vehicleService, UserRightsService userRightsService) {
         this.vehicleService = vehicleService;
+        this.userRightsService = userRightsService;
     }
 
     @GetMapping({"", "/search"})
@@ -51,7 +54,7 @@ public class VehicleController {
                        @RequestParam(defaultValue = "house") String sort,
                        @RequestParam(defaultValue = "asc") String direction,
                        Model model) {
-        boolean admin = isAdmin();
+        boolean admin = SecurityAuthHelper.isAdmin();
         if (!admin) {
             vehicleType = null;
             blockNo = null;
@@ -98,6 +101,7 @@ public class VehicleController {
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
+        requireEditAccess();
         Vehicle vehicle = vehicleService.findById(id)
                 .orElseThrow(() -> new VehicleNotFoundException(id));
         VehicleFormDto form = VehicleFormDto.builder()
@@ -121,6 +125,7 @@ public class VehicleController {
                              BindingResult bindingResult,
                              Model model,
                              RedirectAttributes redirectAttributes) {
+        requireEditAccess();
         if (bindingResult.hasErrors()) {
             model.addAttribute("formTitle", "Edit Vehicle");
             model.addAttribute("formAction", "/vehicles/edit/" + id);
@@ -140,6 +145,7 @@ public class VehicleController {
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        requireDeleteAccess();
         vehicleService.delete(id);
         redirectAttributes.addFlashAttribute("successMessage", "Vehicle moved to Deleted. You can restore it later.");
         return "redirect:/vehicles";
@@ -205,16 +211,17 @@ public class VehicleController {
                 .body(bytes);
     }
 
-    private boolean isAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return false;
+    private void requireEditAccess() {
+        if (SecurityAuthHelper.isAdmin() || userRightsService.isPublicEditAllowed()) {
+            return;
         }
-        for (GrantedAuthority authority : authentication.getAuthorities()) {
-            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
-                return true;
-            }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Edit is not allowed for users.");
+    }
+
+    private void requireDeleteAccess() {
+        if (SecurityAuthHelper.isAdmin() || userRightsService.isPublicDeleteAllowed()) {
+            return;
         }
-        return false;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Delete is not allowed for users.");
     }
 }

@@ -521,3 +521,65 @@ button.nav-excel-toggle {
 footer.bg-light {
     background: #e8eef4 !important;
 }
+
+/* ===== Admin dashboard stats: row1 = 3 boxes, row2 = 2 boxes ===== */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+}
+
+.dashboard-stat-box {
+    grid-column: span 2; /* 3 boxes per row */
+    min-width: 0;
+}
+
+.dashboard-stat-box-half {
+    grid-column: span 3; /* 2 boxes on second row */
+}
+
+.dashboard-stat-body {
+    padding: 0.65rem 0.35rem;
+}
+
+.dashboard-stat-label {
+    font-size: 0.68rem;
+    line-height: 1.2;
+}
+
+.dashboard-stat-value {
+    margin-top: 0.35rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--app-navy);
+    line-height: 1.1;
+}
+
+.dashboard-others-hint {
+    font-size: 0.58rem;
+    line-height: 1.15;
+    margin-top: 0.1rem;
+}
+
+@media (min-width: 768px) {
+    .dashboard-stats {
+        gap: 1rem;
+    }
+
+    .dashboard-stat-body {
+        padding: 1.25rem;
+    }
+
+    .dashboard-stat-label {
+        font-size: 0.875rem;
+    }
+
+    .dashboard-stat-value {
+        margin-top: 0.5rem;
+        font-size: 2rem;
+    }
+
+    .dashboard-others-hint {
+        font-size: 0.7rem;
+    }
+}

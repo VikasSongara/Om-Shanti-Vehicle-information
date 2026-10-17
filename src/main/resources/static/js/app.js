@@ -84,4 +84,37 @@ document.addEventListener('DOMContentLoaded', function () {
             setExcelOpen(false);
         }
     });
+
+    // Vehicle number: GJ01HK5500 -> GJ 01 HK 5500 while typing (Add/Edit form)
+    var vehicleNumberInput = document.querySelector('.js-vehicle-number-format');
+    if (vehicleNumberInput) {
+        function formatVehicleNumber(value) {
+            var raw = (value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+            var parts = [];
+            if (raw.length > 0) {
+                parts.push(raw.slice(0, 2));
+            }
+            if (raw.length > 2) {
+                parts.push(raw.slice(2, 4));
+            }
+            if (raw.length > 4) {
+                parts.push(raw.slice(4, 6));
+            }
+            if (raw.length > 6) {
+                parts.push(raw.slice(6, 10));
+            }
+            return parts.join(' ');
+        }
+
+        function applyVehicleNumberFormat() {
+            var formatted = formatVehicleNumber(vehicleNumberInput.value);
+            if (vehicleNumberInput.value !== formatted) {
+                vehicleNumberInput.value = formatted;
+            }
+        }
+
+        applyVehicleNumberFormat();
+        vehicleNumberInput.addEventListener('input', applyVehicleNumberFormat);
+        vehicleNumberInput.addEventListener('blur', applyVehicleNumberFormat);
+    }
 });

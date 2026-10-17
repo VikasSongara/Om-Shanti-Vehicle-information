@@ -54,8 +54,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/vehicles", "/vehicles/search", "/login",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
-                        .requestMatchers("/admin/**", "/vehicles/add", "/vehicles/edit/**",
-                                "/vehicles/delete/**", "/vehicles/deleted", "/vehicles/rollback/**",
+                        // Edit/Delete allowed for guests only when admin enables User Rights (checked in controller)
+                        .requestMatchers("/vehicles/edit/**", "/vehicles/delete/**").permitAll()
+                        .requestMatchers("/admin/**", "/vehicles/add",
+                                "/vehicles/deleted", "/vehicles/rollback/**",
                                 "/vehicles/permanent-delete/**",
                                 "/vehicles/import", "/vehicles/import/**",
                                 "/vehicles/export").hasRole("ADMIN")

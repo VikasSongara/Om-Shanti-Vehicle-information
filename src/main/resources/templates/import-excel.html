@@ -12,12 +12,17 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
                     <h1 class="h4 mb-3"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Import Excel</h1>
-                    <p class="text-muted">
+                    <p class="text-muted mb-2">
                         Upload a <strong>.xlsx</strong> file with these columns:
                         <strong>Vehicle Type</strong>, <strong>Vehicle Number</strong>,
                         <strong>Block No</strong>, <strong>House No</strong>, <strong>Name</strong>, <strong>Mobile Number</strong>.
                         An optional ID column is ignored. Data is saved to the database.
                     </p>
+                    <ul class="text-muted small mb-3">
+                        <li>Any blank cell (including Vehicle Number) or <code>-</code> / <code>- </code> is stored as <code>-</code>.</li>
+                        <li>Blank / <code>-</code> vehicle numbers may be duplicated. Real vehicle numbers must be unique (duplicates are skipped).</li>
+                        <li>All other fields may be duplicated across rows.</li>
+                    </ul>
 
                     <div class="d-flex flex-wrap gap-2 mb-4">
                         <a th:href="@{/vehicles/import/demo}" class="btn btn-outline-primary btn-sm">

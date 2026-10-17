@@ -174,11 +174,12 @@ public class VehicleServiceImpl implements VehicleService {
     @Transactional
     public Vehicle create(VehicleFormDto form) {
         String normalizedNumber = ExcelUtil.normalizeVehicleNumber(form.getVehicleNumber());
-        if (repository.existsByVehicleNumberIgnoreCase(normalizedNumber)) {
+        // Blank / "-" may duplicate; real vehicle numbers must be unique.
+        if (!"-".equals(normalizedNumber) && repository.existsByVehicleNumberIgnoreCase(normalizedNumber)) {
             throw new DuplicateVehicleException(normalizedNumber);
         }
         Vehicle vehicle = toEntity(form);
-        vehicle.setVehicleNumber(normalizedNumber);
+        vehicle.setVehicleNumber(normalizedNumber.isEmpty() ? "-" : normalizedNumber);
         vehicle.setStatus(Vehicle.STATUS_ACTIVE);
         Vehicle saved = repository.save(vehicle);
         log.info("Vehicle added successfully: {}", saved.getVehicleNumber());
@@ -191,11 +192,16 @@ public class VehicleServiceImpl implements VehicleService {
         Vehicle existing = repository.findByIdAndStatus(id, Vehicle.STATUS_ACTIVE)
                 .orElseThrow(() -> new VehicleNotFoundException(id));
         String normalizedNumber = ExcelUtil.normalizeVehicleNumber(form.getVehicleNumber());
-        repository.findByVehicleNumberIgnoreCase(normalizedNumber).ifPresent(v -> {
-            if (!v.getId().equals(id)) {
+        if (normalizedNumber.isEmpty()) {
+            normalizedNumber = "-";
+        }
+        if (!"-".equals(normalizedNumber)) {
+            boolean duplicate = repository.findByVehicleNumberIgnoreCase(normalizedNumber).stream()
+                    .anyMatch(v -> !v.getId().equals(id));
+            if (duplicate) {
                 throw new DuplicateVehicleException(normalizedNumber);
             }
-        });
+        }
         existing.setVehicleType(form.getVehicleType().trim());
         existing.setVehicleNumber(normalizedNumber);
         existing.setBlockNo(form.getBlockNo().trim().toUpperCase(Locale.ROOT));
@@ -252,16 +258,29 @@ public class VehicleServiceImpl implements VehicleService {
     @Transactional(readOnly = true)
     public DashboardStatusDto getDashboardStats() {
         List<Vehicle> active = repository.findByStatus(Vehicle.STATUS_ACTIVE);
-        long cars = active.stream().filter(v -> containsType(v.getVehicleType(), "car")).count();
-        long bikes = active.stream().filter(v -> {
-            String t = v.getVehicleType() == null ? "" : v.getVehicleType().toLowerCase(Locale.ROOT);
-            return t.contains("bike") || t.contains("scooter") || t.contains("motorcycle") || t.contains("two");
-        }).count();
+        long cars = 0;
+        long bikes = 0;
+        long activa = 0;
+        long others = 0;
+        for (Vehicle v : active) {
+            String t = v.getVehicleType() == null ? "" : v.getVehicleType().trim().toLowerCase(Locale.ROOT);
+            if (t.contains("car")) {
+                cars++;
+            } else if (t.contains("activa")) {
+                activa++;
+            } else if (t.contains("bike")) {
+                bikes++;
+            } else {
+                // Rickshaw, Tempo, blank/"-", and any other type
+                others++;
+            }
+        }
         return DashboardStatusDto.builder()
                 .totalVehicles(active.size())
                 .totalCars(cars)
                 .totalBikes(bikes)
-                .totalActiveRecords(active.size())
+                .totalActiva(activa)
+                .totalOthers(others)
                 .build();
     }
 
@@ -313,17 +332,26 @@ public class VehicleServiceImpl implements VehicleService {
                 result.setInvalidRows(result.getInvalidRows() + 1);
                 continue;
             }
-            String normalized = ExcelUtil.normalizeVehicleNumber(vehicle.getVehicleNumber());
+            // Missing data in any field → "-". Real vehicle numbers must be unique; blank/"-" may duplicate.
+            String normalized = ExcelUtil.normalizeVehicleNumberOrDash(vehicle.getVehicleNumber());
             vehicle.setId(null);
             vehicle.setVehicleNumber(normalized);
-            vehicle.setMobileNumber(ExcelUtil.normalizeMobile(vehicle.getMobileNumber()));
+            vehicle.setVehicleType(ExcelUtil.normalizeBlankOrDash(vehicle.getVehicleType()));
+            vehicle.setBlockNo(ExcelUtil.normalizeBlankOrDash(vehicle.getBlockNo()));
+            vehicle.setHouseNo(ExcelUtil.normalizeBlankOrDash(vehicle.getHouseNo()));
+            vehicle.setName(ExcelUtil.normalizeBlankOrDash(vehicle.getName()));
+            String mobile = ExcelUtil.normalizeBlankOrDash(vehicle.getMobileNumber());
+            vehicle.setMobileNumber("-".equals(mobile) ? "-" : ExcelUtil.normalizeMobile(mobile));
             vehicle.setStatus(Vehicle.STATUS_ACTIVE);
-            if (seenNumbers.contains(normalized) || existingNumbers.contains(normalized)) {
+            if (!"-".equals(normalized)
+                    && (seenNumbers.contains(normalized) || existingNumbers.contains(normalized))) {
                 result.getErrors().add("Row " + rowNum + ": Duplicate vehicle number: " + normalized);
                 result.setSkippedDuplicates(result.getSkippedDuplicates() + 1);
                 continue;
             }
-            seenNumbers.add(normalized);
+            if (!"-".equals(normalized)) {
+                seenNumbers.add(normalized);
+            }
             valid.add(vehicle);
         }
 
@@ -387,28 +415,23 @@ public class VehicleServiceImpl implements VehicleService {
 
     private List<String> validateImportRow(Vehicle vehicle, int rowNum) {
         List<String> errors = new ArrayList<>();
-        if (isBlank(vehicle.getVehicleType())) {
-            errors.add("Row " + rowNum + ": Vehicle type is required");
-        }
-        if (isBlank(vehicle.getVehicleNumber())) {
-            errors.add("Row " + rowNum + ": Vehicle number is required");
-        }
-        if (isBlank(vehicle.getBlockNo())) {
-            errors.add("Row " + rowNum + ": Block number is required");
-        } else if (!BlockOptions.isValid(vehicle.getBlockNo())) {
-            errors.add("Row " + rowNum + ": Block number must be A, B, C, D, E, F, or G");
+        // Blank fields become "-"; only validate format when a real value is present.
+        String blockNo = ExcelUtil.normalizeBlankOrDash(vehicle.getBlockNo());
+        if (!"-".equals(blockNo)) {
+            if (!BlockOptions.isValid(blockNo)) {
+                errors.add("Row " + rowNum + ": Block number must be A, B, C, D, E, F, G, or -");
+            } else {
+                vehicle.setBlockNo(blockNo.trim().toUpperCase(Locale.ROOT));
+            }
         } else {
-            vehicle.setBlockNo(vehicle.getBlockNo().trim().toUpperCase(Locale.ROOT));
+            vehicle.setBlockNo("-");
         }
-        if (isBlank(vehicle.getHouseNo())) {
-            errors.add("Row " + rowNum + ": House number is required");
-        }
-        if (isBlank(vehicle.getName())) {
-            errors.add("Row " + rowNum + ": Name is required");
-        }
-        String mobile = ExcelUtil.normalizeMobile(vehicle.getMobileNumber());
-        if (!mobile.matches("\\d{10}")) {
-            errors.add("Row " + rowNum + ": Mobile number must be exactly 10 digits");
+        String mobileRaw = ExcelUtil.normalizeBlankOrDash(vehicle.getMobileNumber());
+        if (!"-".equals(mobileRaw)) {
+            String mobile = ExcelUtil.normalizeMobile(mobileRaw);
+            if (!mobile.matches("\\d{10}")) {
+                errors.add("Row " + rowNum + ": Mobile number must be exactly 10 digits or -");
+            }
         }
         return errors;
     }
@@ -421,10 +444,6 @@ public class VehicleServiceImpl implements VehicleService {
             return false;
         }
         return value.toLowerCase(Locale.ROOT).contains(criterion.trim().toLowerCase(Locale.ROOT));
-    }
-
-    private boolean containsType(String type, String keyword) {
-        return type != null && type.toLowerCase(Locale.ROOT).contains(keyword);
     }
 
     private Comparator<Vehicle> buildComparator(String sort, String direction) {

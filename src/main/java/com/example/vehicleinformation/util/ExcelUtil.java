@@ -119,15 +119,39 @@ public final class ExcelUtil {
                 continue;
             }
             vehicles.add(Vehicle.builder()
-                    .vehicleType(getCellString(row, columns[0]))
-                    .vehicleNumber(normalizeVehicleNumber(getCellString(row, columns[1])))
-                    .blockNo(getCellString(row, columns[2]))
-                    .houseNo(getCellString(row, columns[3]))
-                    .name(getCellString(row, columns[4]))
-                    .mobileNumber(getCellString(row, columns[5]))
+                    .vehicleType(normalizeBlankOrDash(getCellString(row, columns[0])))
+                    .vehicleNumber(normalizeVehicleNumberOrDash(getCellString(row, columns[1])))
+                    .blockNo(normalizeBlankOrDash(getCellString(row, columns[2])))
+                    .houseNo(normalizeBlankOrDash(getCellString(row, columns[3])))
+                    .name(normalizeBlankOrDash(getCellString(row, columns[4])))
+                    .mobileNumber(normalizeBlankOrDash(getCellString(row, columns[5])))
                     .build());
         }
         return vehicles;
+    }
+
+    /**
+     * Blank, "-", or "- " (dash with optional spaces) become "-".
+     * Other values are trimmed and kept as-is (duplicates allowed for non-vehicle-number fields).
+     */
+    public static String normalizeBlankOrDash(String value) {
+        if (value == null) {
+            return "-";
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty() || trimmed.replaceAll("\\s+", "").equals("-")) {
+            return "-";
+        }
+        return trimmed;
+    }
+
+    /** Vehicle number: blank / "-" / "- " → "-"; otherwise uppercase with spaces removed. */
+    public static String normalizeVehicleNumberOrDash(String vehicleNumber) {
+        String normalized = normalizeVehicleNumber(vehicleNumber);
+        if (normalized.isEmpty() || "-".equals(normalized)) {
+            return "-";
+        }
+        return normalized;
     }
 
     static int[] resolveImportColumnIndexes(Sheet sheet) {

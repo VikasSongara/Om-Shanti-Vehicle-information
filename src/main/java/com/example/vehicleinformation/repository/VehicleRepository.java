@@ -12,7 +12,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     Optional<Vehicle> findByIdAndStatus(Long id, Integer status);
 
-    Optional<Vehicle> findByVehicleNumberIgnoreCase(String vehicleNumber);
+    List<Vehicle> findByVehicleNumberIgnoreCase(String vehicleNumber);
 
     boolean existsByVehicleNumberIgnoreCase(String vehicleNumber);
 

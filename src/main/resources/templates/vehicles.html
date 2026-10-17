@@ -129,12 +129,12 @@
                         </a>
                     </th>
                     <th>Mobile Number</th>
-                    <th sec:authorize="hasRole('ADMIN')" class="text-center">Actions</th>
+                    <th th:if="${showVehicleActions}" class="text-center">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(vehiclePage.content)}">
-                    <td th:colspan="${#authorization.expression('hasRole(''ADMIN'')') ? 7 : 6}" class="text-center text-muted py-4"
+                    <td th:colspan="${showVehicleActions ? 7 : 6}" class="text-center text-muted py-4"
                         th:text="${vehiclePage.searchMessage} ?: 'No vehicle records found.'">
                         No vehicle records found.
                     </td>
@@ -154,9 +154,13 @@
                             <i class="bi bi-telephone-fill"></i>
                         </a>
                     </td>
-                    <td sec:authorize="hasRole('ADMIN')" class="text-center text-nowrap">
-                        <a th:href="@{/vehicles/edit/{id}(id=${v.id})}" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <form th:action="@{/vehicles/delete/{id}(id=${v.id})}" method="post" class="d-inline delete-form"
+                    <td th:if="${showVehicleActions}" class="text-center text-nowrap">
+                        <a th:if="${canEditVehicle}"
+                           th:href="@{/vehicles/edit/{id}(id=${v.id})}"
+                           class="btn btn-sm btn-outline-primary">Edit</a>
+                        <form th:if="${canDeleteVehicle}"
+                              th:action="@{/vehicles/delete/{id}(id=${v.id})}" method="post"
+                              class="d-inline delete-form"
                               data-confirm="Move this vehicle to Deleted? You can restore it later from the Deleted menu.">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>

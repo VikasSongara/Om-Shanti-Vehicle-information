@@ -7,13 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(
-        name = "vehicles",
-        uniqueConstraints = @UniqueConstraint(name = "uk_vehicles_vehicle_number", columnNames = "vehicle_number")
-)
+@Table(name = "vehicles")
 public class Vehicle {
 
     public static final int STATUS_ACTIVE = 1;

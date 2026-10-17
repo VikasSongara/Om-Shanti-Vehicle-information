@@ -17,12 +17,19 @@
 
                         <div class="mb-3">
                             <label class="form-label" for="vehicleType">Vehicle Type</label>
-                            <input type="text" class="form-control" id="vehicleType" th:field="*{vehicleType}" required/>
+                            <select class="form-select" id="vehicleType" th:field="*{vehicleType}" required>
+                                <option value="">Select Vehicle Type</option>
+                                <option th:each="type : ${vehicleTypeOptions}"
+                                        th:value="${type}"
+                                        th:text="${type}">Bike</option>
+                            </select>
                             <div class="text-danger small" th:if="${#fields.hasErrors('vehicleType')}" th:errors="*{vehicleType}"></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="vehicleNumber">Vehicle Number</label>
-                            <input type="text" class="form-control text-uppercase" id="vehicleNumber" th:field="*{vehicleNumber}" required/>
+                            <input type="text" class="form-control text-uppercase js-vehicle-number-format"
+                                   id="vehicleNumber" th:field="*{vehicleNumber}" maxlength="13"
+                                   autocomplete="off" placeholder="GJ 01 HK 5500" required/>
                             <div class="text-danger small" th:if="${#fields.hasErrors('vehicleNumber')}" th:errors="*{vehicleNumber}"></div>
                         </div>
                         <div class="row">

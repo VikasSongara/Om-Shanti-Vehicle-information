@@ -41,7 +41,20 @@ Profile `dev` is active by default (`spring.profiles.active=dev`).
 
 ### Production (PostgreSQL Supabase — profile `prod`)
 
-Set env vars (Render) and use profile `prod`. See Deploy on Render section below.
+Settings are in `application-prod.properties` (DB pooler, admin login, cookies). No environment variables required at runtime.
+
+Build the JAR, copy to the server, then:
+
+```bash
+java -jar /home/ubuntu/vehicle-information-system.jar --spring.profiles.active=prod
+```
+
+Local dev (default profile):
+
+```bash
+mvn clean package -DskipTests
+java -jar target/vehicle-information-system.jar --spring.profiles.active=dev
+```
 
 ---
 
@@ -56,79 +69,37 @@ Set env vars (Render) and use profile `prod`. See Deploy on Render section below
 
 ---
 
-## Database (Supabase PostgreSQL)
+## Database
 
-Defaults match your Supabase project. Password is **required** via env:
+| Profile | Config file | Database |
+| --- | --- | --- |
+| `dev` | `application-dev.properties` | SQL Server (local) |
+| `prod` | `application-prod.properties` | Supabase PostgreSQL (Session pooler) |
 
-| Variable | Default / example |
-| --- | --- |
-| `DB_HOST` | `db.tqdduurvsqqnfqqdgfbx.supabase.co` |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `postgres` |
-| `DB_USER` | `postgres` |
-| `DB_PASSWORD` | *(set in Render / local env — never commit)* |
+Edit the matching properties file, rebuild the JAR, and redeploy. Hibernate creates/updates tables (`ddl-auto=update`).
 
-On first startup, Hibernate creates the `vehicles` table (`ddl-auto=update`).
+**Security:** If the repo is public, do not commit real DB or admin passwords—keep secrets only on the server or use a private repo.
 
 ---
 
-## Admin Configuration
+## Admin login
 
-### Local / Dev (`spring.profiles.active=dev`)
-Defaults (no env vars needed):
-
-| Username | Password |
-| --- | --- |
-| `admin` | `admin123` |
-
-Override with `ADMIN_USERNAME` / `ADMIN_PASSWORD` if you want.
-
-### Production / Render (`spring.profiles.active=prod`)
-**Required** environment variables (no defaults — app will not start without them):
-
-| Variable | Example |
-| --- | --- |
-| `ADMIN_USERNAME` | `admin` |
-| `ADMIN_PASSWORD` | strong password or BCrypt hash |
-
-Never commit production passwords.
+| Profile | Username | Password (defaults in properties) |
+| --- | --- | --- |
+| `dev` | `admin` | `admin123` |
+| `prod` | `admin` | `admin123` (change in `application-prod.properties`) |
 
 ---
 
-## Deploy on Render (Docker)
+## Optional: Render (Docker)
 
-1. Push this project to GitHub.
-2. Render → **New → Web Service** → Docker runtime.
-3. Environment variables:
-
-| Key | Value |
-| --- | --- |
-| `SPRING_PROFILES_ACTIVE` | `prod` |
-| `COOKIE_SECURE` | `true` |
-| `ADMIN_USERNAME` | your admin username (**required**) |
-| `ADMIN_PASSWORD` | your strong password (**required**) |
-| `SPRING_DATASOURCE_URL` | Supabase **Session pooler** JDBC URL (**required**, see below) |
-| `DB_USER` | `postgres.<project-ref>` (Session pooler user) |
-| `DB_PASSWORD` | your Supabase database password |
-
-**Do not use** `db.<project>.supabase.co` on Render — it is often IPv6-only and the deploy hangs with “No open ports detected”.
-
-### Supabase Session pooler URL
-
-In Supabase: **Project Settings → Database → Connection string → Session pooler**.
-
-Example:
+If you deploy with Docker on Render, set only:
 
 ```text
-SPRING_DATASOURCE_URL=jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
-DB_USER=postgres.tqdduurvsqqnfqqdgfbx
-DB_PASSWORD=your-supabase-db-password
+SPRING_PROFILES_ACTIVE=prod
 ```
 
-4. Health Check Path: `/`
-5. Deploy → open `https://<your-app>.onrender.com/`
-
-If deploy still times out, check Render logs for Hikari/DB errors (wrong password, missing env vars, or still using the direct `db.*` host).
+All other settings are baked into `application-prod.properties` inside the JAR at build time. Rebuild and push the image after changing production properties.
 
 ---
 

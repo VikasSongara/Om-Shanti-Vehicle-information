@@ -9,11 +9,12 @@ public class VehicleFormDto {
     private Long id;
 
     @NotBlank(message = "Vehicle type is required")
-    @Size(max = 50, message = "Vehicle type must be at most 50 characters")
+    @Pattern(regexp = "^(Bike|Activa|Car|Rickshaw|Tempo)$",
+            message = "Vehicle type must be Bike, Activa, Car, Rickshaw, or Tempo")
     private String vehicleType;
 
     @NotBlank(message = "Vehicle number is required")
-    @Size(max = 20, message = "Vehicle number must be at most 20 characters")
+    @Size(max = 13, message = "Vehicle number must be at most 13 characters")
     private String vehicleNumber;
 
     @NotBlank(message = "Block number is required")
