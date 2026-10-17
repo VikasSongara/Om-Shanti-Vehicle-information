@@ -71,6 +71,7 @@ public class VehicleController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
+        requireAddAccess();
         model.addAttribute("vehicleForm", new VehicleFormDto());
         model.addAttribute("formTitle", "Add Vehicle");
         model.addAttribute("formAction", "/vehicles/add");
@@ -82,6 +83,7 @@ public class VehicleController {
                             BindingResult bindingResult,
                             Model model,
                             RedirectAttributes redirectAttributes) {
+        requireAddAccess();
         if (bindingResult.hasErrors()) {
             model.addAttribute("formTitle", "Add Vehicle");
             model.addAttribute("formAction", "/vehicles/add");
@@ -209,6 +211,13 @@ public class VehicleController {
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .contentLength(bytes.length)
                 .body(bytes);
+    }
+
+    private void requireAddAccess() {
+        if (SecurityAuthHelper.isAdmin() || userRightsService.isPublicAddAllowed()) {
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Add is not allowed for users.");
     }
 
     private void requireEditAccess() {

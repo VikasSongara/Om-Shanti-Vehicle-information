@@ -21,29 +21,36 @@ public class UserRightsService {
     @Transactional(readOnly = true)
     public UserRights getRights() {
         return repository.findById(UserRights.SINGLETON_ID)
-                .orElseGet(() -> new UserRights(false, false));
+                .orElseGet(() -> new UserRights(false, false, false));
     }
 
     @Transactional
     public UserRights ensureDefaults() {
         return repository.findById(UserRights.SINGLETON_ID).orElseGet(() -> {
-            UserRights defaults = new UserRights(false, false);
+            UserRights defaults = new UserRights(false, false, false);
             UserRights saved = repository.save(defaults);
-            log.info("Initialized user rights defaults: allowEdit=false, allowDelete=false");
+            log.info("Initialized user rights defaults: allowAdd=false, allowEdit=false, allowDelete=false");
             return saved;
         });
     }
 
     @Transactional
-    public UserRights update(boolean allowEdit, boolean allowDelete) {
+    public UserRights update(boolean allowAdd, boolean allowEdit, boolean allowDelete) {
         UserRights rights = repository.findById(UserRights.SINGLETON_ID)
-                .orElseGet(() -> new UserRights(false, false));
+                .orElseGet(() -> new UserRights(false, false, false));
         rights.setId(UserRights.SINGLETON_ID);
+        rights.setAllowAdd(allowAdd);
         rights.setAllowEdit(allowEdit);
         rights.setAllowDelete(allowDelete);
         UserRights saved = repository.save(rights);
-        log.info("User rights updated: allowEdit={}, allowDelete={}", allowEdit, allowDelete);
+        log.info("User rights updated: allowAdd={}, allowEdit={}, allowDelete={}",
+                allowAdd, allowEdit, allowDelete);
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isPublicAddAllowed() {
+        return getRights().isAllowAdd();
     }
 
     @Transactional(readOnly = true)

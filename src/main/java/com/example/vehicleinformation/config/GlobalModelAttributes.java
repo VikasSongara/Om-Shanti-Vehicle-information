@@ -27,6 +27,11 @@ public class GlobalModelAttributes {
         return VehicleTypeOptions.VALUES;
     }
 
+    @ModelAttribute("canAddVehicle")
+    public boolean canAddVehicle() {
+        return SecurityAuthHelper.isAdmin() || userRightsService.isPublicAddAllowed();
+    }
+
     @ModelAttribute("canEditVehicle")
     public boolean canEditVehicle() {
         return SecurityAuthHelper.isAdmin() || userRightsService.isPublicEditAllowed();

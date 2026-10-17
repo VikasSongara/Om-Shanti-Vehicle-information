@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "user_rights")
@@ -14,6 +15,10 @@ public class UserRights {
     @Id
     private Long id = SINGLETON_ID;
 
+    @Column(name = "allow_add", nullable = false)
+    @ColumnDefault("0")
+    private boolean allowAdd;
+
     @Column(name = "allow_edit", nullable = false)
     private boolean allowEdit;
 
@@ -23,8 +28,9 @@ public class UserRights {
     public UserRights() {
     }
 
-    public UserRights(boolean allowEdit, boolean allowDelete) {
+    public UserRights(boolean allowAdd, boolean allowEdit, boolean allowDelete) {
         this.id = SINGLETON_ID;
+        this.allowAdd = allowAdd;
         this.allowEdit = allowEdit;
         this.allowDelete = allowDelete;
     }
@@ -35,6 +41,14 @@ public class UserRights {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public boolean isAllowAdd() {
+        return allowAdd;
+    }
+
+    public void setAllowAdd(boolean allowAdd) {
+        this.allowAdd = allowAdd;
     }
 
     public boolean isAllowEdit() {

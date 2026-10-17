@@ -32,18 +32,21 @@ public class AdminController {
     @GetMapping("/user-rights")
     public String userRightsPage(Model model) {
         UserRights rights = userRightsService.getRights();
+        model.addAttribute("allowAdd", rights.isAllowAdd());
         model.addAttribute("allowEdit", rights.isAllowEdit());
         model.addAttribute("allowDelete", rights.isAllowDelete());
         return "user-rights";
     }
 
     @PostMapping("/user-rights")
-    public String updateUserRights(@RequestParam(defaultValue = "false") boolean allowEdit,
+    public String updateUserRights(@RequestParam(defaultValue = "false") boolean allowAdd,
+                                   @RequestParam(defaultValue = "false") boolean allowEdit,
                                    @RequestParam(defaultValue = "false") boolean allowDelete,
                                    RedirectAttributes redirectAttributes) {
-        userRightsService.update(allowEdit, allowDelete);
+        userRightsService.update(allowAdd, allowEdit, allowDelete);
         redirectAttributes.addFlashAttribute("successMessage",
-                "User rights updated. Edit: " + (allowEdit ? "ON" : "OFF")
+                "User rights updated. Add: " + (allowAdd ? "ON" : "OFF")
+                        + ", Edit: " + (allowEdit ? "ON" : "OFF")
                         + ", Delete: " + (allowDelete ? "ON" : "OFF") + ".");
         return "redirect:/admin/user-rights";
     }
