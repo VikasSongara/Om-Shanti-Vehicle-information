@@ -24,12 +24,13 @@ public class SupabaseDatasourceValidator {
 
             if (!StringUtils.hasText(url) || !StringUtils.hasText(username) || !StringUtils.hasText(password)) {
                 throw new IllegalStateException("""
-                        Prod datasource env vars are missing. On Render set ALL three:
-                          SPRING_DATASOURCE_URL=jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require
+                        Prod DB env vars are missing (url='%s', username='%s', passwordSet=%s).
+                        In Render → Environment, add ALL three keys (exact names):
+                          SPRING_DATASOURCE_URL=jdbc:postgresql://aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require
                           SPRING_DATASOURCE_USERNAME=postgres.<your-project-ref>
                           SPRING_DATASOURCE_PASSWORD=<your-db-password>
-                        DB_HOST / DB_NAME are ignored. Username must be postgres.<project-ref>, not just postgres.
-                        """);
+                        Then click Save and Manual Deploy. DB_HOST / DB_NAME are ignored.
+                        """.formatted(url, username, StringUtils.hasText(password)));
             }
             if (!username.contains(".")) {
                 throw new IllegalStateException("""
