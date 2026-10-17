@@ -84,10 +84,10 @@ Edit the matching properties file, rebuild the JAR, and redeploy. Hibernate crea
 
 ## Admin login
 
-| Profile | Username | Password (defaults in properties) |
+| Profile | Username | Password |
 | --- | --- | --- |
-| `dev` | `admin` | `admin123` |
-| `prod` | `admin` | `admin123` (change in `application-prod.properties`) |
+| `dev` (local) | `admin` | `admin#123` |
+| `prod` (Render) | from env `ADMIN_USERNAME` | from env `ADMIN_PASSWORD` |
 
 ---
 
