@@ -7,3 +7,13 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      # Required — set values in Render Dashboard (Environment):
+      # SPRING_DATASOURCE_URL = jdbc:postgresql://aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require
+      # SPRING_DATASOURCE_USERNAME = postgres.<project-ref>   ← NOT plain "postgres"
+      # SPRING_DATASOURCE_PASSWORD = <real password>
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
